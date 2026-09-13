@@ -46,15 +46,14 @@ class OpenSkyAuthError(OpenSkyAPIError):
         super().__init__(401, "Authentication failed — check OPENSKY_USERNAME / OPENSKY_PASSWORD")
 
 
+OPENSKY_TOKEN_URL = "https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token"
+
+
 class OpenSkyClient(ADSBProvider):
     """Fetches live ADS-B state vectors from the OpenSky Network REST API.
 
-    Usage::
-
-        client = OpenSkyClient(settings)
-        await client.connect()
-        states = await client.fetch_states(bounds=(45.0, 5.0, 48.0, 10.0))
-        await client.disconnect()
+    Supports both OAuth2 client credentials (client_id / client_secret) and
+    legacy Basic authentication / anonymous mode.
     """
 
     # ------------------------------------------------------------------
@@ -65,15 +64,49 @@ class OpenSkyClient(ADSBProvider):
         self.settings = settings
         self._base_url = settings.opensky_base_url.rstrip("/")
         self._client: Optional[httpx.AsyncClient] = None
+        self._token: Optional[str] = None
+        self._token_expires_at: Optional[float] = None
+
+    async def _get_bearer_token(self) -> Optional[str]:
+        """Proactively obtain and refresh OAuth2 token if client_id and secret are set."""
+        if not (self.settings.opensky_client_id and self.settings.opensky_client_secret):
+            return None
+
+        now = time.time()
+        if self._token and self._token_expires_at and now < self._token_expires_at:
+            return self._token
+
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as auth_client:
+                r = await auth_client.post(
+                    OPENSKY_TOKEN_URL,
+                    data={
+                        "grant_type": "client_credentials",
+                        "client_id": self.settings.opensky_client_id,
+                        "client_secret": self.settings.opensky_client_secret,
+                    },
+                )
+                r.raise_for_status()
+                data = r.json()
+                self._token = data["access_token"]
+                expires_in = data.get("expires_in", 1800)
+                self._token_expires_at = now + expires_in - 30
+                logger.info("OpenSkyClient: OAuth2 Bearer token refreshed successfully")
+                return self._token
+        except Exception as e:
+            logger.error("OpenSkyClient: OAuth2 token acquisition failed: %s", e)
+            return None
 
     async def connect(self) -> None:
         """Create the underlying ``httpx.AsyncClient``."""
         auth: Optional[tuple[str, str]] = None
-        if self.settings.opensky_username and self.settings.opensky_password:
+        if self.settings.opensky_client_id and self.settings.opensky_client_secret:
+            logger.info("OpenSkyClient: configured with OAuth2 client credentials")
+        elif self.settings.opensky_username and self.settings.opensky_password:
             auth = (self.settings.opensky_username, self.settings.opensky_password)
-            logger.info("OpenSkyClient: using authenticated mode")
+            logger.info("OpenSkyClient: using username/password Basic authentication")
         else:
-            logger.info("OpenSkyClient: using anonymous mode (stricter rate limits)")
+            logger.info("OpenSkyClient: using anonymous mode")
 
         self._client = httpx.AsyncClient(
             base_url=self._base_url,
@@ -138,7 +171,9 @@ class OpenSkyClient(ADSBProvider):
 
         t0 = time.monotonic()
         try:
-            response = await self._client.get("/states/all", params=params or None)
+            token = await self._get_bearer_token()
+            headers = {"Authorization": f"Bearer {token}"} if token else None
+            response = await self._client.get("/states/all", params=params or None, headers=headers)
         except httpx.TimeoutException:
             logger.error("OpenSky API request timed out")
             raise

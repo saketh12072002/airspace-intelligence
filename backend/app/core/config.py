@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     opensky_base_url: str = "https://opensky-network.org/api"
     opensky_username: str = ""
     opensky_password: str = ""
+    opensky_client_id: str = ""
+    opensky_client_secret: str = ""
     cors_origins: Union[List[str], str] = ["http://localhost:3000"]
     log_level: str = "INFO"
     app_env: str = "development"
