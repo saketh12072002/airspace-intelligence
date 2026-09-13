@@ -10,13 +10,14 @@ import { Header } from '@/components/ui/Header';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { StatusOverlay } from '@/components/ui/StatusOverlay';
 import { AircraftPanel } from '@/components/aircraft/AircraftPanel';
+import { MapStyleSelector, MAP_STYLES, type MapTheme } from '@/components/ui/MapStyleSelector';
+import { AltitudeLegend } from '@/components/ui/AltitudeLegend';
 import type { Aircraft, FlightRoute } from '@/types';
 
 /**
- * Dark aviation map style.
- * CartoDB Dark Matter — free, no API key required.
+ * Dark aviation map style default.
  */
-const MAP_STYLE = 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json';
+const DEFAULT_MAP_STYLE = MAP_STYLES.dark.url;
 
 /** Centre of India for the "recenter" button. */
 const INDIA_CENTER: [number, number] = [78.9629, 20.5937];
@@ -26,6 +27,7 @@ const FlightMap: React.FC = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const [mapReady, setMapReady] = useState(false);
+  const [mapTheme, setMapTheme] = useState<MapTheme>('dark');
 
   // Aircraft WebSocket state
   const { aircraftRef, version, count, status, lastUpdate, error } = useAircraftWebSocket();
@@ -41,7 +43,7 @@ const FlightMap: React.FC = () => {
 
     const map = new maplibregl.Map({
       container: mapContainer.current,
-      style: MAP_STYLE,
+      style: DEFAULT_MAP_STYLE,
       center: INDIA_CENTER,
       zoom: INDIA_ZOOM,
       attributionControl: false,
@@ -147,6 +149,14 @@ const FlightMap: React.FC = () => {
     });
   }, []);
 
+  // ── Map style switcher ─────────────────────────────────────────
+  const handleThemeChange = useCallback((newTheme: MapTheme) => {
+    setMapTheme(newTheme);
+    if (mapRef.current) {
+      mapRef.current.setStyle(MAP_STYLES[newTheme].url);
+    }
+  }, []);
+
   return (
     <div className="flex flex-col w-full h-screen bg-gray-950 overflow-hidden">
       {/* Header */}
@@ -158,6 +168,12 @@ const FlightMap: React.FC = () => {
 
         {/* Search bar */}
         <SearchBar onSearch={handleSearch} />
+
+        {/* Map Theme / Style Switcher */}
+        <MapStyleSelector currentTheme={mapTheme} onThemeChange={handleThemeChange} />
+
+        {/* Dynamic Altitude Spectrum Legend */}
+        <AltitudeLegend />
 
         {/* Recenter button */}
         <button

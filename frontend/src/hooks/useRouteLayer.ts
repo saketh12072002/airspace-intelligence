@@ -149,11 +149,21 @@ export function useRouteLayer(
       layersReady.current = true;
     };
 
+    const handleStyleData = () => {
+      if (!map.getSource(ROUTE_SOURCE_FLOWN)) {
+        layersReady.current = false;
+        setup();
+      }
+    };
+
     if (map.isStyleLoaded()) {
       setup();
-    } else {
-      map.once('styledata', setup);
     }
+    map.on('styledata', handleStyleData);
+
+    return () => {
+      map.off('styledata', handleStyleData);
+    };
   }, [map]);
 
   // Update route data whenever selected route or aircraft coordinates change

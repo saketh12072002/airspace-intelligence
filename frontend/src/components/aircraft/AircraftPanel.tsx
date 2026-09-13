@@ -122,41 +122,43 @@ export const AircraftPanel: React.FC<AircraftPanelProps> = ({
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4 text-gray-200">
         {/* ── Route Section (Origin -> Destination) ─────────────────── */}
         {origin && destination ? (
-          <div className="bg-gray-800/60 rounded-lg p-3.5 border border-gray-700/60 shadow-inner">
-            <div className="flex items-center justify-between text-center">
-              {/* Origin */}
-              <div className="flex-1 text-left min-w-0">
-                <span className="text-2xl font-black font-mono text-emerald-400 tracking-tight">
+          <div className="bg-gradient-to-b from-gray-800/80 via-gray-900/90 to-gray-950 rounded-xl p-3.5 border border-gray-700/60 shadow-xl">
+            <div className="flex items-center justify-between text-center gap-2">
+              {/* Origin Card */}
+              <div className="flex-1 text-left min-w-0 p-2 rounded-lg bg-emerald-950/40 border border-emerald-500/30">
+                <span className="text-2xl font-black font-mono text-emerald-300 tracking-tight block">
                   {origin.iata_code || origin.icao_code || 'DEP'}
                 </span>
-                <p className="text-xs font-semibold text-gray-200 truncate">
+                <p className="text-xs font-semibold text-emerald-100 truncate mt-0.5">
                   {origin.municipality || origin.name || 'Departure'}
                 </p>
-                <p className="text-[10px] text-gray-400 truncate">
+                <p className="text-[10px] text-emerald-400/80 truncate">
                   {origin.country_name || origin.country_iso || ''}
                 </p>
               </div>
 
-              {/* Flight Icon */}
-              <div className="px-3 flex flex-col items-center justify-center">
-                <svg
-                  className="w-5 h-5 text-cyan-400 transform rotate-90"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" />
-                </svg>
+              {/* Center Airplane Graphic */}
+              <div className="px-1 flex flex-col items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-cyan-950/80 border border-cyan-500/50 flex items-center justify-center shadow-cyan-500/20 shadow-md">
+                  <svg
+                    className="w-4 h-4 text-cyan-300 transform rotate-90"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" />
+                  </svg>
+                </div>
               </div>
 
-              {/* Destination */}
-              <div className="flex-1 text-right min-w-0">
-                <span className="text-2xl font-black font-mono text-amber-400 tracking-tight">
+              {/* Destination Card */}
+              <div className="flex-1 text-right min-w-0 p-2 rounded-lg bg-amber-950/40 border border-amber-500/30">
+                <span className="text-2xl font-black font-mono text-amber-300 tracking-tight block">
                   {destination.iata_code || destination.icao_code || 'ARR'}
                 </span>
-                <p className="text-xs font-semibold text-gray-200 truncate">
+                <p className="text-xs font-semibold text-amber-100 truncate mt-0.5">
                   {destination.municipality || destination.name || 'Arrival'}
                 </p>
-                <p className="text-[10px] text-gray-400 truncate">
+                <p className="text-[10px] text-amber-400/80 truncate">
                   {destination.country_name || destination.country_iso || ''}
                 </p>
               </div>
@@ -165,21 +167,21 @@ export const AircraftPanel: React.FC<AircraftPanelProps> = ({
             {/* Flight Progress Bar */}
             {route.progress_percent != null && (
               <div className="mt-3.5 pt-2.5 border-t border-gray-700/50">
-                <div className="flex justify-between items-center text-[11px] font-mono text-gray-400 mb-1">
-                  <span>{route.progress_percent.toFixed(0)}% Completed</span>
+                <div className="flex justify-between items-center text-[11px] font-mono text-gray-300 mb-1.5">
+                  <span className="font-bold text-cyan-300">{route.progress_percent.toFixed(0)}% Completed</span>
                   {route.total_distance_km && (
-                    <span>{Math.round(route.total_distance_km)} km total</span>
+                    <span className="text-gray-400">{Math.round(route.total_distance_km)} km total</span>
                   )}
                 </div>
-                <div className="w-full h-1.5 bg-gray-700 rounded-full overflow-hidden">
+                <div className="w-full h-2 bg-gray-950 rounded-full overflow-hidden p-0.5 border border-gray-800">
                   <div
-                    className="h-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-amber-400 rounded-full transition-all duration-500"
+                    className="h-full bg-gradient-to-r from-emerald-400 via-cyan-400 via-blue-500 to-amber-400 rounded-full transition-all duration-500 shadow-cyan-500/50 shadow-sm"
                     style={{ width: `${Math.min(100, Math.max(0, route.progress_percent))}%` }}
                   />
                 </div>
-                <div className="flex justify-between items-center text-[10px] font-mono text-gray-400 mt-1">
-                  <span>{route.distance_flown_km ? `${Math.round(route.distance_flown_km)} km flown` : ''}</span>
-                  <span>{route.distance_remaining_km ? `${Math.round(route.distance_remaining_km)} km remaining` : ''}</span>
+                <div className="flex justify-between items-center text-[10px] font-mono text-gray-400 mt-1.5">
+                  <span className="text-emerald-400 font-semibold">{route.distance_flown_km ? `${Math.round(route.distance_flown_km)} km flown` : ''}</span>
+                  <span className="text-amber-400 font-semibold">{route.distance_remaining_km ? `${Math.round(route.distance_remaining_km)} km remaining` : ''}</span>
                 </div>
               </div>
             )}
@@ -245,35 +247,35 @@ export const AircraftPanel: React.FC<AircraftPanelProps> = ({
 
           <div className="grid grid-cols-2 gap-2">
             {/* Altitude */}
-            <div className="bg-gray-800/50 p-2.5 rounded-lg border border-gray-700/40">
-              <span className="text-[10px] text-gray-400 block">Altitude</span>
-              <span className="text-sm font-mono font-bold text-cyan-400">
+            <div className="bg-gradient-to-br from-cyan-950/50 via-gray-900 to-blue-950/30 p-2.5 rounded-lg border border-cyan-800/40 shadow-sm">
+              <span className="text-[10px] text-cyan-300/80 font-medium block">Altitude</span>
+              <span className="text-sm font-mono font-bold text-cyan-300">
                 {formatAltitude(aircraft.baro_altitude)}
               </span>
             </div>
 
             {/* Ground Speed */}
-            <div className="bg-gray-800/50 p-2.5 rounded-lg border border-gray-700/40">
-              <span className="text-[10px] text-gray-400 block">Ground Speed</span>
-              <span className="text-sm font-mono font-bold text-cyan-400">
+            <div className="bg-gradient-to-br from-amber-950/50 via-gray-900 to-orange-950/30 p-2.5 rounded-lg border border-amber-800/40 shadow-sm">
+              <span className="text-[10px] text-amber-300/80 font-medium block">Ground Speed</span>
+              <span className="text-sm font-mono font-bold text-amber-300">
                 {formatSpeed(aircraft.velocity)}
               </span>
             </div>
 
             {/* Heading */}
-            <div className="bg-gray-800/50 p-2.5 rounded-lg border border-gray-700/40">
-              <span className="text-[10px] text-gray-400 block">Heading (Track)</span>
-              <span className="text-sm font-mono font-bold text-gray-200">
+            <div className="bg-gradient-to-br from-purple-950/50 via-gray-900 to-indigo-950/30 p-2.5 rounded-lg border border-purple-800/40 shadow-sm">
+              <span className="text-[10px] text-purple-300/80 font-medium block">Heading (Track)</span>
+              <span className="text-sm font-mono font-bold text-purple-200">
                 {formatHeading(aircraft.true_track)}
               </span>
             </div>
 
             {/* Vertical Rate */}
-            <div className="bg-gray-800/50 p-2.5 rounded-lg border border-gray-700/40">
-              <span className="text-[10px] text-gray-400 block">Vertical Rate</span>
+            <div className="bg-gradient-to-br from-emerald-950/50 via-gray-900 to-teal-950/30 p-2.5 rounded-lg border border-emerald-800/40 shadow-sm">
+              <span className="text-[10px] text-emerald-300/80 font-medium block">Vertical Rate</span>
               <span className={`text-sm font-mono font-bold ${
                 (aircraft.vertical_rate ?? 0) > 0.5
-                  ? 'text-emerald-400'
+                  ? 'text-emerald-300'
                   : (aircraft.vertical_rate ?? 0) < -0.5
                   ? 'text-rose-400'
                   : 'text-gray-200'
@@ -285,14 +287,14 @@ export const AircraftPanel: React.FC<AircraftPanelProps> = ({
             {/* Squawk */}
             <div className="bg-gray-800/50 p-2.5 rounded-lg border border-gray-700/40">
               <span className="text-[10px] text-gray-400 block">Squawk</span>
-              <span className="text-sm font-mono text-gray-200">
+              <span className="text-sm font-mono text-yellow-300 font-bold">
                 {aircraft.squawk || '—'}
               </span>
             </div>
 
             {/* Last Contact */}
             <div className="bg-gray-800/50 p-2.5 rounded-lg border border-gray-700/40">
-              <span className="text-[10px] text-gray-400 block">Last Contact</span>
+              <span className="text-[10px] text-gray-400 block">Radar Contact</span>
               <span className="text-sm font-mono text-gray-200">
                 {formatTimestamp(aircraft.last_contact)}
               </span>
