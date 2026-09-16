@@ -16,6 +16,7 @@ from typing import Optional, Tuple
 import redis.asyncio as aioredis
 
 from app.core.logging import get_logger
+from app.repositories.base import HistoryRepositoryBase
 from app.schemas.aircraft_state import AircraftState
 from app.services.base import ADSBProvider
 from app.services.opensky.client import OpenSkyRateLimitError
@@ -37,6 +38,7 @@ class IngestionService:
         redis_client: An ``aioredis`` client instance.
         poll_interval: Seconds between polling cycles.
         bounds: Optional ``(lamin, lomin, lamax, lomax)`` bounding box.
+        history_repo: Optional history repository for capturing flight tracks.
     """
 
     def __init__(
@@ -45,11 +47,13 @@ class IngestionService:
         redis_client: aioredis.Redis,
         poll_interval: int = 10,
         bounds: Optional[Tuple[float, float, float, float]] = None,
+        history_repo: Optional[HistoryRepositoryBase] = None,
     ) -> None:
         self.provider = provider
         self.redis = redis_client
         self.poll_interval = max(poll_interval, 5)  # Never faster than 5s (OpenSky hard limit)
         self.bounds = bounds
+        self.history_repo = history_repo
         self._running = False
         self._task: Optional[asyncio.Task[None]] = None
 
@@ -161,6 +165,13 @@ class IngestionService:
         pipe.expire(REDIS_KEY_AIRCRAFT_STATES, self.poll_interval * 5)
 
         await pipe.execute()
+
+        # Update historical track records if history repository configured
+        if self.history_repo:
+            try:
+                await self.history_repo.record_positions(states)
+            except Exception:
+                logger.exception("Failed to record position history in history_repo")
 
         # Notify the FastAPI StateListener via Redis Pub/Sub.
         await self.redis.publish(REDIS_CHANNEL_AIRCRAFT_UPDATE, now)

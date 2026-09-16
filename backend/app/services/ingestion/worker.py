@@ -35,8 +35,10 @@ async def main() -> None:
     )
     logger.info("Connected to Redis at %s", settings.redis_url)
 
-    # --- Provider ---
+    # --- Provider & Repositories ---
     provider = OpenSkyClient(settings)
+    from app.repositories.history_repo import HistoryRepository
+    history_repo = HistoryRepository(redis_client=redis_client)
 
     # --- Service ---
     service = IngestionService(
@@ -44,6 +46,7 @@ async def main() -> None:
         redis_client=redis_client,
         poll_interval=settings.ingestion_interval_seconds,
         bounds=settings.parsed_ingestion_bounds,
+        history_repo=history_repo,
     )
 
     # --- Graceful shutdown ---
