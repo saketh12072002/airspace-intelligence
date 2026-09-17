@@ -19,7 +19,11 @@ import type { Aircraft, FlightRoute } from '@/types';
  */
 const DEFAULT_MAP_STYLE = MAP_STYLES.dark.url;
 
-/** Centre of India for the "recenter" button. */
+/** Centre of the world for global overview */
+const WORLD_CENTER: [number, number] = [15.0, 20.0];
+const WORLD_ZOOM = 1.8;
+
+/** Centre of India for regional view */
 const INDIA_CENTER: [number, number] = [78.9629, 20.5937];
 const INDIA_ZOOM = 4.5;
 
@@ -44,11 +48,12 @@ const FlightMap: React.FC = () => {
     const map = new maplibregl.Map({
       container: mapContainer.current,
       style: DEFAULT_MAP_STYLE,
-      center: INDIA_CENTER,
-      zoom: INDIA_ZOOM,
+      center: WORLD_CENTER,
+      zoom: WORLD_ZOOM,
       attributionControl: false,
       maxZoom: 18,
-      minZoom: 2,
+      minZoom: 1.0,
+      renderWorldCopies: true,
     });
 
     map.addControl(new maplibregl.NavigationControl(), 'bottom-right');
@@ -140,8 +145,16 @@ const FlightMap: React.FC = () => {
     [aircraftRef],
   );
 
-  // ── Recenter on India ───────────────────────────────────────────
-  const handleRecenter = useCallback(() => {
+  // ── Viewport Preset Handlers ─────────────────────────────────────
+  const handleFlyToWorld = useCallback(() => {
+    mapRef.current?.flyTo({
+      center: WORLD_CENTER,
+      zoom: WORLD_ZOOM,
+      duration: 1500,
+    });
+  }, []);
+
+  const handleFlyToIndia = useCallback(() => {
     mapRef.current?.flyTo({
       center: INDIA_CENTER,
       zoom: INDIA_ZOOM,
@@ -175,21 +188,25 @@ const FlightMap: React.FC = () => {
         {/* Dynamic Altitude Spectrum Legend */}
         <AltitudeLegend />
 
-        {/* Recenter button */}
-        <button
-          onClick={handleRecenter}
-          className="absolute bottom-24 right-3 z-40 bg-gray-900/90 hover:bg-gray-800 border border-gray-700 rounded-lg p-2 transition-colors shadow-lg"
-          title="Recenter on India"
-        >
-          <svg className="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-        </button>
+        {/* Viewport Presets (Global World View & India View) */}
+        <div className="absolute bottom-24 right-3 z-40 flex flex-col gap-1.5 shadow-xl">
+          <button
+            onClick={handleFlyToWorld}
+            className="flex items-center gap-1.5 bg-gray-900/90 hover:bg-gray-800 text-gray-200 border border-gray-700/80 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-all shadow-md backdrop-blur-sm hover:border-cyan-500/50"
+            title="Fit All Global Flights"
+          >
+            <span className="text-sm">🌍</span>
+            <span>World</span>
+          </button>
+          <button
+            onClick={handleFlyToIndia}
+            className="flex items-center gap-1.5 bg-gray-900/90 hover:bg-gray-800 text-gray-200 border border-gray-700/80 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-all shadow-md backdrop-blur-sm hover:border-amber-500/50"
+            title="Recenter on India"
+          >
+            <span className="text-sm">🇮🇳</span>
+            <span>India</span>
+          </button>
+        </div>
 
         {/* Aircraft panel */}
         <AircraftPanel
